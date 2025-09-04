@@ -1,0 +1,17 @@
+{
+  "name": "rechnungsflow-gohighlevel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mandantenfähige Middleware: Native GoHighLevel Rechnungen via Netlify Functions, Upstash Redis und Admin-Cockpit",
+  "scripts": {
+    "dev": "netlify dev",
+    "start": "netlify dev",
+    "build": "echo 'Netlify builds functions automatically'"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.30.1",
+    "axios": "^1.7.7",
+    "zod": "^3.23.8"
+  }
+}
+

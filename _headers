@@ -1,0 +1,24 @@
+# Security and CORS headers
+
+# Protect admin cockpit with Basic Auth
+/admin/*
+  Basic-Auth: admin:changeme
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Cache-Control: no-store
+
+# Allow API access with custom headers
+/api/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Headers: Content-Type, x-api-key, x-admin-key
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  X-Content-Type-Options: nosniff
+
+# Also apply to direct Netlify function paths (if used)
+/.netlify/functions/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Headers: Content-Type, x-api-key, x-admin-key
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  X-Content-Type-Options: nosniff
+

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rechnungsflow Admin</title>
+    <style>
+      :root {
+        --bg: #0b0f13;
+        --panel: #121821;
+        --panel-2: #0e141c;
+        --text: #e8edf2;
+        --muted: #9fb0c3;
+        --border: #263042;
+        --accent: #2ea8ff;
+        --accent-2: #7c4dff;
+        --danger: #ff4d6d;
+        --ok: #4caf50;
+        color-scheme: dark light;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f7f9fc;
+          --panel: #ffffff;
+          --panel-2: #f3f6fb;
+          --text: #0f172a;
+          --muted: #475569;
+          --border: #e2e8f0;
+          --accent: #0ea5e9;
+          --accent-2: #7c3aed;
+          --danger: #e11d48;
+          --ok: #16a34a;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--text); background: radial-gradient(1200px 800px at 80% -10%, rgba(126, 86, 255, .15), transparent 60%), linear-gradient(180deg, var(--bg), var(--bg));
+      }
+      .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+      .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px; }
+      .brand { display:flex; gap:12px; align-items:center; }
+      .logo { width: 36px; height: 36px; display:grid; place-items:center; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; font-weight: 800; }
+      h1 { font-size: 20px; margin: 0; letter-spacing: .3px; }
+      .grid { display:grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
+      @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.15); }
+      .card-h { padding: 14px 16px; display:flex; align-items:center; gap:10px; background: linear-gradient(180deg, rgba(255,255,255,.02), transparent); border-bottom: 1px solid var(--border); }
+      .card-h .title { font-weight: 700; }
+      .card-c { padding: 16px; }
+
+      label { display:block; font-size: 12px; letter-spacing:.3px; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; }
+      input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 10px; outline: none; }
+      input::placeholder { color: #8aa0b6; }
+      .row { display:grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+      .col-6 { grid-column: span 6; }
+      .col-4 { grid-column: span 4; }
+      .col-3 { grid-column: span 3; }
+      .col-8 { grid-column: span 8; }
+      .col-12 { grid-column: span 12; }
+      @media (max-width: 720px) { .col-6, .col-4, .col-3, .col-8 { grid-column: span 12; } }
+
+      .btn { appearance: none; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; display:inline-flex; align-items:center; gap:8px; }
+      .btn:hover { filter: brightness(1.03); }
+      .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #fff; }
+      .btn.ghost { background: transparent; }
+      .btn.danger { background: transparent; border-color: rgba(255,77,109,.5); color: var(--danger); }
+      .actions { display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+
+      .switch { position: relative; width: 48px; height: 28px; background: var(--panel-2); border-radius: 999px; border:1px solid var(--border); cursor:pointer; transition:.2s; }
+      .switch::after { content: ""; position:absolute; top:3px; left:3px; width:22px; height:22px; background:#fff; border-radius:50%; transition:.2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+      .switch.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; }
+      .switch.on::after { left: calc(100% - 25px); background: #fff; }
+
+      .pill { display:inline-flex; align-items:center; gap:8px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background: var(--panel-2); font-size:12px; color: var(--muted); }
+      .badge { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); }
+      .badge.ok { background: rgba(16,185,129,.1); color: #34d399; border-color: rgba(52,211,153,.2); }
+      .badge.err { background: rgba(239,68,68,.12); color: #f87171; border-color: rgba(248,113,113,.25); }
+      .badge.warn { background: rgba(245,158,11,.12); color: #fbbf24; border-color: rgba(251,191,36,.25); }
+
+      .items { display:flex; flex-direction: column; gap: 10px; }
+      .item-row { display: grid; grid-template-columns: 1fr 100px 140px 38px; gap: 10px; align-items: center; }
+      .item-row button.remove { width: 38px; height: 38px; border-radius: 10px; border:1px solid var(--border); background: var(--panel-2); color: var(--danger); cursor:pointer; }
+
+      .summary { display:grid; grid-template-columns: 1fr auto; margin-top: 8px; color: var(--muted); gap: 6px; }
+      .summary .v { color: var(--text); font-variant-numeric: tabular-nums; }
+
+      .note { color: var(--muted); font-size: 12px; }
+      .muted { color: var(--muted); }
+      .log-list { display:flex; flex-direction:column; gap:8px; }
+      .log-item { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--panel-2); }
+      .log-h { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+      .log-time { color: var(--muted); font-size:12px; }
+      .log-msg { font-weight: 600; }
+      .log-json { margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; font-size: 12px; color: #9db3c9; }
+
+      .status { min-height: 18px; }
+      .status.ok { color: var(--ok); }
+      .status.err { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="brand">
+          <div class="logo">RF</div>
+          <h1>Rechnungsflow — Admin</h1>
+        </div>
+        <div class="actions">
+          <span class="pill" title="Diese Seite ist per Basic Auth geschützt">🔐 Basic Auth aktiv</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="left">
+          <div class="card">
+            <div class="card-h"><div class="title">Konfiguration</div></div>
+            <div class="card-c">
+              <div class="row">
+                <div class="col-6">
+                  <label for="apiKey">x-api-key (Backend)</label>
+                  <input id="apiKey" type="text" placeholder="MY_INVOICE_API_KEY" />
+                </div>
+                <div class="col-6">
+                  <label for="adminKey">x-admin-key (Logs, optional)</label>
+                  <input id="adminKey" type="text" placeholder="ADMIN_API_KEY (optional)" />
+                </div>
+              </div>
+              <div class="note" style="margin-top:6px;">Hinweis: Schlüssel werden ausschließlich clientseitig verwendet.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="title">Native Rechnung erstellen</div></div>
+            <div class="card-c">
+              <div class="row">
+                <div class="col-6">
+                  <label for="agencyId">Agency ID</label>
+                  <input id="agencyId" type="text" required />
+                </div>
+                <div class="col-6">
+                  <label for="transactionId">Transaction ID</label>
+                  <input id="transactionId" type="text" required />
+                </div>
+                <div class="col-6">
+                  <label for="locationId">Location ID (GHL)</label>
+                  <input id="locationId" type="text" required />
+                </div>
+                <div class="col-6">
+                  <label for="contactId">Contact ID (GHL)</label>
+                  <input id="contactId" type="text" required />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-12" style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                  <label style="margin:0;">Kleinunternehmerregelung</label>
+                  <div id="toggleSmallBiz" class="switch" role="switch" aria-checked="false" tabindex="0"></div>
+                  <span class="muted">0% USt wenn aktiviert, sonst 19%</span>
+                </div>
+              </div>
+
+              <details style="margin-top:12px;">
+                <summary>Empfänger (optional, nur für Logs)</summary>
+                <div class="row" style="margin-top:8px;">
+                  <div class="col-6">
+                    <label for="recipientName">Name</label>
+                    <input id="recipientName" type="text" />
+                  </div>
+                  <div class="col-6">
+                    <label for="recipientAddress1">Address Line 1</label>
+                    <input id="recipientAddress1" type="text" />
+                  </div>
+                  <div class="col-12">
+                    <label for="recipientAddress2">Address Line 2</label>
+                    <input id="recipientAddress2" type="text" />
+                  </div>
+                </div>
+              </details>
+
+              <h3 style="margin:16px 0 8px;">Positionen</h3>
+              <div id="items" class="items"></div>
+              <div class="actions" style="margin-top:8px;">
+                <button id="addItem" class="btn">＋ Position</button>
+                <button id="clearItems" class="btn danger">Leeren</button>
+              </div>
+
+              <div class="summary">
+                <div>Zwischensumme</div><div class="v" id="sumSubtotal">€ 0,00</div>
+                <div>Steuer (<span id="sumTaxLabel">19%</span>)</div><div class="v" id="sumTax">€ 0,00</div>
+                <div style="font-weight:700;">Gesamt</div><div class="v" id="sumTotal" style="font-weight:700;">€ 0,00</div>
+              </div>
+
+              <div class="actions" style="margin-top:14px;">
+                <button id="sendInvoice" class="btn primary">Native Rechnung erstellen</button>
+                <button id="resetForm" class="btn ghost">Zurücksetzen</button>
+                <div id="sendStatus" class="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="card">
+            <div class="card-h"><div class="title">Logs</div></div>
+            <div class="card-c">
+              <div class="row">
+                <div class="col-4">
+                  <label for="filterAgency">Agency ID</label>
+                  <input id="filterAgency" type="text" placeholder="optional" />
+                </div>
+                <div class="col-4">
+                  <label for="filterTxn">Transaction ID</label>
+                  <input id="filterTxn" type="text" placeholder="optional" />
+                </div>
+                <div class="col-4">
+                  <label for="limit">Limit</label>
+                  <select id="limit">
+                    <option>50</option>
+                    <option selected>100</option>
+                    <option>200</option>
+                    <option>300</option>
+                    <option>500</option>
+                  </select>
+                </div>
+              </div>
+              <div class="actions" style="margin-top:10px;">
+                <button id="refreshLogs" class="btn">Aktualisieren</button>
+                <button id="toggleAuto" class="btn ghost">Auto-Refresh: aus</button>
+              </div>
+              <div id="logs" class="log-list" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const fmtCurrency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
+
+      const itemsEl = document.getElementById('items');
+      const addItemBtn = document.getElementById('addItem');
+      const clearItemsBtn = document.getElementById('clearItems');
+      const sendBtn = document.getElementById('sendInvoice');
+      const resetBtn = document.getElementById('resetForm');
+      const statusEl = document.getElementById('sendStatus');
+      const toggleAutoBtn = document.getElementById('toggleAuto');
+      const refreshBtn = document.getElementById('refreshLogs');
+      const smallBizSwitch = document.getElementById('toggleSmallBiz');
+
+      function itemRow(desc = '', qty = 1, priceEur = 100.00) {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <input type="text" placeholder="Beschreibung" value="${desc}">
+          <input type="number" min="1" step="1" value="${qty}" aria-label="Menge">
+          <input type="number" min="0" step="0.01" value="${priceEur}" aria-label="Einzelpreis (EUR)">
+          <button type="button" class="remove" title="Entfernen">✕</button>
+        `;
+        row.querySelector('.remove').addEventListener('click', () => { row.remove(); recalc(); });
+        row.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
+        return row;
+      }
+
+      function addRow(desc, qty, priceEur){ const r = itemRow(desc, qty, priceEur); itemsEl.appendChild(r); recalc(); }
+
+      function collectItems() {
+        const out = [];
+        itemsEl.querySelectorAll('.item-row').forEach(row => {
+          const [d, q, p] = row.querySelectorAll('input');
+          const description = d.value.trim();
+          const quantity = Number(q.value);
+          const priceEur = Number(p.value);
+          const unitPrice = Math.round((isFinite(priceEur) ? priceEur : 0) * 100); // EUR -> Cent
+          if (description && quantity > 0 && unitPrice >= 0) out.push({ description, quantity, unitPrice });
+        });
+        return out;
+      }
+
+      function getTaxRate(){ return smallBizSwitch.classList.contains('on') ? 0 : 19; }
+
+      function recalc(){
+        const items = collectItems();
+        const subtotalC = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
+        const rate = getTaxRate();
+        const taxC = Math.round(subtotalC * (rate/100));
+        const totalC = subtotalC + taxC;
+        document.getElementById('sumSubtotal').textContent = fmtCurrency.format(subtotalC/100);
+        document.getElementById('sumTax').textContent = fmtCurrency.format(taxC/100);
+        document.getElementById('sumTotal').textContent = fmtCurrency.format(totalC/100);
+        document.getElementById('sumTaxLabel').textContent = rate + '%';
+      }
+
+      function apiPath(name){ return `/api/${name}`; }
+
+      function toggleSwitch(el, val){
+        el.classList.toggle('on', val !== undefined ? !!val : !el.classList.contains('on'));
+        el.setAttribute('aria-checked', el.classList.contains('on') ? 'true' : 'false');
+        recalc();
+      }
+      smallBizSwitch.addEventListener('click', () => toggleSwitch(smallBizSwitch));
+      smallBizSwitch.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSwitch(smallBizSwitch); } });
+
+      function buildPayload(){
+        return {
+          agencyId: document.getElementById('agencyId').value.trim(),
+          locationId: document.getElementById('locationId').value.trim(),
+          contactId: document.getElementById('contactId').value.trim(),
+          transactionId: document.getElementById('transactionId').value.trim(),
+          isSmallBusiness: smallBizSwitch.classList.contains('on'),
+          recipient: {
+            name: document.getElementById('recipientName').value.trim(),
+            addressLine1: document.getElementById('recipientAddress1').value.trim(),
+            addressLine2: document.getElementById('recipientAddress2').value.trim(),
+          },
+          items: collectItems(),
+        };
+      }
+
+      function validatePayload(p){
+        const missing = [];
+        if (!p.agencyId) missing.push('Agency ID');
+        if (!p.locationId) missing.push('Location ID');
+        if (!p.contactId) missing.push('Contact ID');
+        if (!p.transactionId) missing.push('Transaction ID');
+        if (!p.items.length) missing.push('mind. eine Position');
+        return missing;
+      }
+
+      async function sendInvoice(){
+        statusEl.textContent = 'Sende…'; statusEl.className = 'status';
+        const body = buildPayload();
+        const missing = validatePayload(body);
+        if (missing.length){ statusEl.textContent = 'Fehlende Felder: ' + missing.join(', '); statusEl.className = 'status err'; return; }
+        const apiKey = document.getElementById('apiKey').value.trim();
+        if (!apiKey){ statusEl.textContent = 'x-api-key fehlt.'; statusEl.className = 'status err'; return; }
+        try {
+          const res = await fetch(apiPath('create-native-invoice'), { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(body) });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          statusEl.innerHTML = `✔ Native invoice created — <span class="muted">ID:</span> ${data.invoiceId || '-'} · <span class="muted">Nummer:</span> ${data.invoiceNumber || '-'}`;
+          statusEl.className = 'status ok';
+        } catch (e) {
+          statusEl.textContent = 'Fehler: ' + e.message; statusEl.className = 'status err';
+        }
+      }
+
+      function resetForm(){
+        document.getElementById('agencyId').value = '';
+        document.getElementById('locationId').value = '';
+        document.getElementById('contactId').value = '';
+        document.getElementById('transactionId').value = '';
+        document.getElementById('recipientName').value = '';
+        document.getElementById('recipientAddress1').value = '';
+        document.getElementById('recipientAddress2').value = '';
+        itemsEl.innerHTML = '';
+        toggleSwitch(smallBizSwitch, false);
+        addRow('Produkt', 1, 100);
+        statusEl.textContent = '';
+        recalc();
+      }
+
+      async function loadLogs(){
+        const adminKey = document.getElementById('adminKey').value.trim();
+        const agency = document.getElementById('filterAgency').value.trim();
+        const txn = document.getElementById('filterTxn').value.trim();
+        const limit = Number(document.getElementById('limit').value) || 100;
+        const q = new URLSearchParams();
+        if (agency) q.set('agencyId', agency);
+        if (txn) q.set('transactionId', txn);
+        q.set('limit', String(limit));
+        const logsEl = document.getElementById('logs');
+        logsEl.innerHTML = '<div class="muted">Lade…</div>';
+        try {
+          const res = await fetch(apiPath(`get-logs?${q.toString()}`), { headers: adminKey ? { 'x-admin-key': adminKey } : {} });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          logsEl.innerHTML = '';
+          (data.logs || []).forEach(entry => logsEl.appendChild(renderLog(entry)));
+        } catch (e) {
+          logsEl.innerHTML = '<div class="status err">Fehler: ' + e.message + '</div>';
+        }
+      }
+
+      function renderLog(e){
+        const el = document.createElement('div'); el.className = 'log-item';
+        const level = String(e.level || '').toLowerCase();
+        const badgeClass = level.includes('error') ? 'err' : level.includes('warn') ? 'warn' : 'ok';
+        const ts = e.ts ? new Date(e.ts) : null;
+        const time = ts ? ts.toLocaleString('de-DE') : '';
+        const header = document.createElement('div'); header.className = 'log-h';
+        header.innerHTML = `<div class="log-msg">${escapeHtml(e.message || '')}</div><div class="badge ${badgeClass}">${level || 'info'}</div>`;
+        const sub = document.createElement('div'); sub.className = 'log-time'; sub.textContent = time;
+        const json = document.createElement('div'); json.className = 'log-json';
+        json.textContent = JSON.stringify(e, null, 2);
+        el.appendChild(header); el.appendChild(sub); el.appendChild(json);
+        return el;
+      }
+
+      function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+
+      let auto=false, timer=null;
+      function setAuto(v){ auto = !!v; toggleAutoBtn.textContent = 'Auto-Refresh: ' + (auto ? 'an' : 'aus'); if (timer) { clearInterval(timer); timer=null; } if (auto) timer = setInterval(loadLogs, 8000); }
+
+      addItemBtn.addEventListener('click', () => addRow('', 1, 100));
+      clearItemsBtn.addEventListener('click', () => { itemsEl.innerHTML=''; recalc(); });
+      sendBtn.addEventListener('click', sendInvoice);
+      resetBtn.addEventListener('click', resetForm);
+      toggleAutoBtn.addEventListener('click', () => setAuto(!auto));
+      refreshBtn.addEventListener('click', loadLogs);
+
+      // Initial Seed
+      addRow('Produkt', 1, 100);
+      recalc();
+      loadLogs();
+    </script>
+  </body>
+  </html>
