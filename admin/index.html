@@ -133,6 +133,36 @@
           </div>
 
           <div class="card">
+            <div class="card-h"><div class="title">Mandantenverwaltung</div></div>
+            <div class="card-c">
+              <div class="row">
+                <div class="col-6">
+                  <label for="mAgencyId">Agency ID</label>
+                  <input id="mAgencyId" type="text" placeholder="z.B. ACME" />
+                </div>
+                <div class="col-6">
+                  <label for="mInvoiceCounter">Start Counter</label>
+                  <input id="mInvoiceCounter" type="number" min="0" step="1" value="0" />
+                </div>
+                <div class="col-12">
+                  <label for="mInvoiceFormat">Invoice Format</label>
+                  <input id="mInvoiceFormat" type="text" placeholder="INV-{YYYY}-{counter:5}" />
+                </div>
+                <div class="col-12">
+                  <label for="mGhlKey">GHL API Key (Subaccount)</label>
+                  <input id="mGhlKey" type="text" placeholder="Location API Key oder OAuth Token" />
+                </div>
+              </div>
+              <div class="actions" style="margin-top:10px;">
+                <button id="btnLoadAgency" class="btn">Laden</button>
+                <button id="btnSaveAgency" class="btn primary">Speichern/Aktualisieren</button>
+                <div id="agencyStatus" class="status"></div>
+              </div>
+              <div class="note" style="margin-top:6px;">Benötigt gültigen <b>x-admin-key</b>. Secrets werden serverseitig gespeichert.</div>
+            </div>
+          </div>
+
+          <div class="card">
             <div class="card-h"><div class="title">Native Rechnung erstellen</div></div>
             <div class="card-c">
               <div class="row">
@@ -249,6 +279,13 @@
       const toggleAutoBtn = document.getElementById('toggleAuto');
       const refreshBtn = document.getElementById('refreshLogs');
       const smallBizSwitch = document.getElementById('toggleSmallBiz');
+      const mAgencyId = document.getElementById('mAgencyId');
+      const mInvoiceFormat = document.getElementById('mInvoiceFormat');
+      const mInvoiceCounter = document.getElementById('mInvoiceCounter');
+      const mGhlKey = document.getElementById('mGhlKey');
+      const btnLoadAgency = document.getElementById('btnLoadAgency');
+      const btnSaveAgency = document.getElementById('btnSaveAgency');
+      const agencyStatus = document.getElementById('agencyStatus');
 
       function itemRow(desc = '', qty = 1, priceEur = 100.00) {
         const row = document.createElement('div');
@@ -294,6 +331,46 @@
       }
 
       function apiPath(name){ return `/api/${name}`; }
+
+      async function loadAgency(){
+        agencyStatus.textContent = 'Lade…'; agencyStatus.className = 'status';
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey){ agencyStatus.textContent = 'x-admin-key fehlt.'; agencyStatus.className = 'status err'; return; }
+        const id = mAgencyId.value.trim();
+        if (!id){ agencyStatus.textContent = 'Agency ID fehlt.'; agencyStatus.className = 'status err'; return; }
+        try {
+          const res = await fetch(apiPath(`admin-get-agency?agencyId=${encodeURIComponent(id)}`), { headers: { 'x-admin-key': adminKey } });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          const cfg = data.config || {};
+          mInvoiceFormat.value = cfg.invoice_format || '';
+          mInvoiceCounter.value = Number(cfg.invoice_counter || 0);
+          mGhlKey.value = cfg.has_ghl_key ? '••••••••' : '';
+          agencyStatus.textContent = 'Geladen.'; agencyStatus.className = 'status ok';
+        } catch (e) {
+          agencyStatus.textContent = 'Fehler: ' + e.message; agencyStatus.className = 'status err';
+        }
+      }
+
+      async function saveAgency(){
+        agencyStatus.textContent = 'Speichere…'; agencyStatus.className = 'status';
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey){ agencyStatus.textContent = 'x-admin-key fehlt.'; agencyStatus.className = 'status err'; return; }
+        const id = mAgencyId.value.trim();
+        if (!id){ agencyStatus.textContent = 'Agency ID fehlt.'; agencyStatus.className = 'status err'; return; }
+        const body = { agencyId: id };
+        if (mInvoiceFormat.value.trim()) body.invoice_format = mInvoiceFormat.value.trim();
+        if (mInvoiceCounter.value !== '') body.invoice_counter = Number(mInvoiceCounter.value) || 0;
+        if (mGhlKey.value.trim() && mGhlKey.value.trim() !== '••••••••') body.ghl_api_key = mGhlKey.value.trim();
+        try {
+          const res = await fetch(apiPath('admin-upsert-agency'), { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify(body) });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          agencyStatus.textContent = 'Gespeichert.'; agencyStatus.className = 'status ok';
+        } catch (e) {
+          agencyStatus.textContent = 'Fehler: ' + e.message; agencyStatus.className = 'status err';
+        }
+      }
 
       function toggleSwitch(el, val){
         el.classList.toggle('on', val !== undefined ? !!val : !el.classList.contains('on'));
@@ -410,6 +487,8 @@
       resetBtn.addEventListener('click', resetForm);
       toggleAutoBtn.addEventListener('click', () => setAuto(!auto));
       refreshBtn.addEventListener('click', loadLogs);
+      btnLoadAgency.addEventListener('click', loadAgency);
+      btnSaveAgency.addEventListener('click', saveAgency);
 
       // Initial Seed
       addRow('Produkt', 1, 100);

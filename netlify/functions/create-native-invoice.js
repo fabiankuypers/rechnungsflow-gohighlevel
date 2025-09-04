@@ -201,8 +201,10 @@ exports.handler = async (event) => {
       },
     };
 
-    if (!GHL_API_KEY) {
-      await logEvent('error', 'GHL_API_KEY missing', { agencyId, transactionId, invoiceNumber, counter });
+    const agencyGhlKey = (config.ghl_api_key && String(config.ghl_api_key)) || null;
+    const effectiveGhlKey = agencyGhlKey || GHL_API_KEY;
+    if (!effectiveGhlKey) {
+      await logEvent('error', 'No GHL key configured (agency or env)', { agencyId, transactionId, invoiceNumber, counter });
       return error(500, 'Server misconfiguration');
     }
 
@@ -212,7 +214,7 @@ exports.handler = async (event) => {
     try {
       ghlRes = await axios.post(url, ghlPayload, {
         headers: {
-          Authorization: `Bearer ${GHL_API_KEY}`,
+          Authorization: `Bearer ${effectiveGhlKey}`,
           Version: '2021-07-28',
           'Content-Type': 'application/json',
           Accept: 'application/json',
@@ -252,6 +254,7 @@ exports.handler = async (event) => {
       ghlInvoiceId,
       httpStatus: ghlRes.status,
       recipient: payload.recipient || null,
+      keySource: agencyGhlKey ? 'agency' : 'env',
     });
 
     // Schritt 7: Antwort
@@ -271,4 +274,3 @@ exports.handler = async (event) => {
     return error(500, 'Internal Server Error');
   }
 };
-
